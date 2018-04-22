@@ -10,7 +10,6 @@
 #include <vector>
 
 #if __cplusplus > 199711L
-#  include <thread>
 #  include <mutex>
 #  define TNPLATFORM_CPLUSPLUS11
 #endif
@@ -110,9 +109,6 @@ private:
     CRITICAL_SECTION m_Mutex;
 #endif
 };
-
-
-class TNScopedLock; // [TODO]
 
 
 // TNThread : Abstraction layer for platform threading APIs.
