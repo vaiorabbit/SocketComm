@@ -9,6 +9,12 @@
 #include <queue>
 #include <vector>
 
+#if __cplusplus > 199711L
+#  include <thread>
+#  include <mutex>
+#  define TNPLATFORM_CPLUSPLUS11
+#endif
+
 #if defined(__APPLE__) || defined(LINUX) || defined(__CYGWIN__)
 #  include <pthread.h>
 #  include <sys/types.h>
@@ -54,7 +60,8 @@ class TNMutex
 public:
     TNMutex()
         {
-#if defined(TNPLATFORM_UNIX)
+#if defined(TNPLATFORM_CPLUSPLUS11)
+#elif defined(TNPLATFORM_UNIX)
             pthread_mutex_init( &m_Mutex, 0 );
 #elif defined(TNPLATFORM_WINDOWS)
             ::InitializeCriticalSection( &m_Mutex );
@@ -63,7 +70,8 @@ public:
 
     ~TNMutex()
         {
-#if defined(TNPLATFORM_UNIX)
+#if defined(TNPLATFORM_CPLUSPLUS11)
+#elif defined(TNPLATFORM_UNIX)
             pthread_mutex_destroy( &m_Mutex );
 #elif defined(TNPLATFORM_WINDOWS)
             ::DeleteCriticalSection( &m_Mutex );
@@ -72,7 +80,9 @@ public:
 
     void Lock()
         {
-#if defined(TNPLATFORM_UNIX)
+#if defined(TNPLATFORM_CPLUSPLUS11)
+            m_Mutex.lock();
+#elif defined(TNPLATFORM_UNIX)
             pthread_mutex_lock( &m_Mutex );
 #elif defined(TNPLATFORM_WINDOWS)
             ::EnterCriticalSection( &m_Mutex );
@@ -81,7 +91,9 @@ public:
 
     void Unlock()
         {
-#if defined(TNPLATFORM_UNIX)
+#if defined(TNPLATFORM_CPLUSPLUS11)
+            m_Mutex.unlock();
+#elif defined(TNPLATFORM_UNIX)
             pthread_mutex_unlock( &m_Mutex );
 #elif defined(TNPLATFORM_WINDOWS)
             ::LeaveCriticalSection( &m_Mutex );
@@ -90,12 +102,17 @@ public:
 
 private:
 
-#if defined(TNPLATFORM_UNIX)
+#if defined(TNPLATFORM_CPLUSPLUS11)
+    std::mutex m_Mutex;
+#elif defined(TNPLATFORM_UNIX)
     pthread_mutex_t m_Mutex;
 #elif defined(TNPLATFORM_WINDOWS)
     CRITICAL_SECTION m_Mutex;
 #endif
 };
+
+
+class TNScopedLock; // [TODO]
 
 
 // TNThread : Abstraction layer for platform threading APIs.
@@ -104,7 +121,7 @@ class TNThread
 public:
 
 #if defined(TNPLATFORM_UNIX)
-    static constexpr pthread_t InvalidHandle = nullptr;
+    static constexpr pthread_t InvalidHandle = NULL;
     typedef pthread_t Handle;
     typedef void* RetVal;
 #elif defined(TNPLATFORM_WINDOWS)
